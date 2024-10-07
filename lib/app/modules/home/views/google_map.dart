@@ -19,6 +19,7 @@ class _GoogleMapExampleState extends State<GoogleMapExample> {
   Location location = Location();
   late GoogleMapController mapController;
   final customInfoWindowController = CustomInfoWindowController();
+  final apiKey = "AIzaSyDAGsVp0FWyZdYBoB_TG54QyTZwPjet7-M";
 
   void getCustomMarker() {
     BitmapDescriptor.asset(ImageConfiguration(), "assets/image/marker.png")
@@ -57,6 +58,36 @@ class _GoogleMapExampleState extends State<GoogleMapExample> {
   final Set<Marker> _marker = {};
   final Set<Polyline> _polyline = {};
 
+  String _getStreetViewImageUrl(double latitude, double longitude) {
+    return 'https://maps.googleapis.com/maps/api/streetview?size=600x300&location=$latitude,$longitude&key=$apiKey';
+  } // get image url
+
+  void onMapTapped(LatLng position){
+    if(mounted){
+      setState(() {
+        _marker.clear();
+        _marker.add(Marker(
+            markerId: MarkerId(position.toString()),
+            position: position,
+            icon: BitmapDescriptor.defaultMarker,
+            onTap: () {
+              customInfoWindowController.addInfoWindow!(
+                  Container(
+                    color: Colors.white,
+                    child: Column(
+                      children: [
+                        Image.network(_getStreetViewImageUrl(position.latitude, position.longitude),height:125,width:250,fit:BoxFit.cover),
+                        Text("Area Address")
+                      ],
+                    ),
+                  ),
+                  position
+              );
+            }));
+      });
+    }
+  } // to see marker when user click on map anywhere
+
   void setPolyline() {
     // initialized marker set by forEach
     _onPoint.asMap().forEach((index, onPoint) {
@@ -86,7 +117,7 @@ class _GoogleMapExampleState extends State<GoogleMapExample> {
           points: _onPoint,
           color: Colors.blueAccent));
     });
-  }
+  } // to see polyline
 
   Future<void> _userCurrentLocation() async {
     bool serviceEnable;
@@ -119,14 +150,14 @@ class _GoogleMapExampleState extends State<GoogleMapExample> {
 
     mapController.animateCamera(CameraUpdate.newCameraPosition(
         CameraPosition(target: _currentLocation, zoom: 15)));
-  }
+  } // to see uer-current location
 
   @override
   void initState() {
     // TODO: implement initState
     getCustomMarker();
-    // _userCurrentLocation();
-    setPolyline();
+    // _userCurrentLocation(); // uncomment the method to see current location
+    // setPolyline(); //  uncomment the method to see polyline
     super.initState();
   }
 
@@ -144,6 +175,7 @@ class _GoogleMapExampleState extends State<GoogleMapExample> {
               myLocationButtonEnabled: true,
               myLocationEnabled: true,
               markers: _marker,
+              onTap: onMapTapped,
             ),
             CustomInfoWindow(
                 controller: customInfoWindowController,
